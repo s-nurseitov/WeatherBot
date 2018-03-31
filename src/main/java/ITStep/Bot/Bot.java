@@ -1,7 +1,8 @@
 package ITStep.Bot;
 
+import ITStep.Image.ImageService;
 import ITStep.Weather.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.json.JSONException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -12,6 +13,7 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -22,7 +24,8 @@ public class Bot extends TelegramLongPollingBot {
     private final static String _BOT_USER_NAME = "TrainingWeatherBot";
     private long chatId;
 
-    IWeatherService weatherService = null;
+    WeatherService weatherService = null;
+    ImageService imageService = null;
     ApplicationContext ctx = null;
     public Bot() {
         ctx = new ClassPathXmlApplicationContext("bean-config.xml");
@@ -31,35 +34,36 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         chatId = update.getMessage().getChatId();
 
-        String txt = update.getMessage().getText();
+        String message = update.getMessage().getText();
         System.out.println(LocalDateTime.now().format(DateTimeFormatter.ISO_TIME) +
                 " Message from " +
                 update.getMessage().getChat().getUserName() +" " +
                 update.getMessage().getChat().getFirstName() + " " +
-                update.getMessage().getChat().getLastName() + ": " + txt);
+                update.getMessage().getChat().getLastName() + ": " + message);
 
-        if(txt == null || txt.isEmpty()) return;
+        if(message == null || message.isEmpty()) return;
 
-        if (txt.contains("\u0030\u20E3\u0031\u20E3Astana")) {
-            txt = "current weather Astana";
-        } else if (txt.contains("\u0030\u20E3\u0032\u20E3Almaty")) {
-            txt = "current weather Almaty";
+        if (message.contains("\u0030\u20E3\u0031\u20E3Astana")) {
+            message = "Astana";
+        } else if (message.contains("\u0030\u20E3\u0032\u20E3Almaty")) {
+            message = "Almaty";
         }
 
-        if (txt.equals("/start")) {
+        message = message.toLowerCase();
+        if (message.equals("/start")) {
             start();
         }
-        else if (txt.contains("current weather ")) {
-            sendWeather(txt);
+        else {
+            sendWeather(message);
         }
     }
 
-    private void sendWeather(String txt) {
+    private void sendWeather(String city) {
         String weather = null;
-        String city = txt.substring("current weather ".length());
-        weatherService = ctx.getBean(IWeatherService.class);
+        weatherService = ctx.getBean(WeatherService.class);
+        imageService = ctx.getBean(ImageService.class);
         try {
-            weatherService.GetCurrentWeather(city);
+            weatherService.LoadCurrentWeather(city);
         } catch (Exception e) {
             e.printStackTrace();
             sendTextMessage("Город не найден!");
@@ -70,18 +74,15 @@ public class Bot extends TelegramLongPollingBot {
                 "\nГород: " + weatherService.getCity() +
                 "\nТемпература: " + weatherService.getTemp() + "\u00b0C" +
                 "\nДавление: " + weatherService.getPressure() +
-                "\nВлажность: " + weatherService.getHumidity()+"%";
+                "\nВлажность: " + weatherService.getHumidity() + "%";
         String url = null;
-        if (txt.contains("Astana")) {
-            url = "http://www.astana-hotels.net/images/astana-city/bayterek2.jpg";
-        } else if (txt.contains("Almaty")) {
-            url = "http://friends.kz/uploads/posts/2013-05/1369821448_1.jpg";
-        }
-        if (url != null) {
-            sendPhotoMessage(url,weather);
-        } else {
+        try {
+            url = imageService.getImageUrlByCity(city);
+        } catch (Exception e) {
             sendTextMessage(weather);
+            e.printStackTrace();
         }
+        sendPhotoMessage(url, weather);
     }
 
     private void sendPhotoMessage(String url, String text) {
