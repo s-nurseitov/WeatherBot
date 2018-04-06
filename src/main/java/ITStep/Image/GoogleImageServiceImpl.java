@@ -5,12 +5,14 @@ import ITStep.HttpRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+@Component
 public class GoogleImageServiceImpl implements ImageService {
     private final static String APPID = "AIzaSyCHpqNbtZDz4qwS1kwwPkHt2v0BXnjuCDg";
 

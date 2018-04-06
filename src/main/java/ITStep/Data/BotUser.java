@@ -1,4 +1,4 @@
 package ITStep.Data;
 
-public class BotUsers {
+public class BotUser {
 }

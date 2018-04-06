@@ -2,7 +2,9 @@ package ITStep.Weather;
 
 import ITStep.HttpRequest;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ApixuWeatherServiceImpl implements WeatherService {
     private final static String APPID = "9f9df973e4044c82b8052818182703";
     private String url = "http://api.apixu.com/v1/current.json";
@@ -14,8 +16,8 @@ public class ApixuWeatherServiceImpl implements WeatherService {
     private String pressure;
 
     public void LoadCurrentWeather(String city) throws Exception {
-        url+="?key="+APPID+"&q="+city;
-        JSONObject responseBody = HttpRequest.doQuery(url);
+        String resultUrl = url + "?key=" + APPID + "&q="+ city;
+        JSONObject responseBody = HttpRequest.doQuery(resultUrl);
         System.out.println(responseBody.toString());
         JSONObject current = responseBody.getJSONObject("current");
         JSONObject location = responseBody.getJSONObject("location");

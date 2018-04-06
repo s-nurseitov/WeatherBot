@@ -2,9 +2,8 @@ package ITStep.Bot;
 
 import ITStep.Image.ImageService;
 import ITStep.Weather.*;
-import org.json.JSONException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.api.objects.Update;
@@ -13,22 +12,28 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class Bot extends TelegramLongPollingBot {
     private final static String _TOKEN = "595769930:AAGFeygIEv7CoXqg1IMerLmE_tn1Pn-HQFA";
     private final static String _BOT_USER_NAME = "TrainingWeatherBot";
     private long chatId;
 
-    WeatherService weatherService = null;
-    ImageService imageService = null;
-    ApplicationContext ctx = null;
-    public Bot() {
-        ctx = new ClassPathXmlApplicationContext("bean-config.xml");
+    @Autowired
+    WeatherService weatherService;
+    @Autowired
+    ImageService imageService;
+
+    public void setWeatherService(WeatherService weatherService) {
+        this.weatherService = weatherService;
+    }
+
+    public void setImageService(ImageService imageService) {
+        this.imageService = imageService;
     }
 
     public void onUpdateReceived(Update update) {
@@ -60,8 +65,6 @@ public class Bot extends TelegramLongPollingBot {
 
     private void sendWeather(String city) {
         String weather = null;
-        weatherService = ctx.getBean(WeatherService.class);
-        imageService = ctx.getBean(ImageService.class);
         try {
             weatherService.LoadCurrentWeather(city);
         } catch (Exception e) {
