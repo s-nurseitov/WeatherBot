@@ -7,15 +7,26 @@ import java.util.Objects;
 @Entity
 @Table(name = "USERS", schema = "WEATHERBOT", catalog = "TEST")
 public class UsersEntity {
-    private long id;
-    private String chatId;
-    private String firstName;
-    private String lastName;
-    private String name;
-    private Timestamp createDate;
-
     @Id
     @Column(name = "ID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    @Basic
+    @Column(name = "CHAT_ID")
+    private String chatId;
+    @Basic
+    @Column(name = "FIRST_NAME")
+    private String firstName;
+    @Basic
+    @Column(name = "LAST_NAME")
+    private String lastName;
+    @Basic
+    @Column(name = "NAME")
+    private String name;
+    @Basic
+    @Column(name = "CREATE_DATE")
+    private Timestamp createDate;
+
     public long getId() {
         return id;
     }
@@ -24,8 +35,6 @@ public class UsersEntity {
         this.id = id;
     }
 
-    @Basic
-    @Column(name = "CHAT_ID")
     public String getChatId() {
         return chatId;
     }
@@ -34,8 +43,6 @@ public class UsersEntity {
         this.chatId = chatId;
     }
 
-    @Basic
-    @Column(name = "FIRST_NAME")
     public String getFirstName() {
         return firstName;
     }
@@ -44,8 +51,6 @@ public class UsersEntity {
         this.firstName = firstName;
     }
 
-    @Basic
-    @Column(name = "LAST_NAME")
     public String getLastName() {
         return lastName;
     }
@@ -54,8 +59,6 @@ public class UsersEntity {
         this.lastName = lastName;
     }
 
-    @Basic
-    @Column(name = "NAME")
     public String getName() {
         return name;
     }
@@ -64,8 +67,6 @@ public class UsersEntity {
         this.name = name;
     }
 
-    @Basic
-    @Column(name = "CREATE_DATE")
     public Timestamp getCreateDate() {
         return createDate;
     }

@@ -1,11 +1,14 @@
 package ITStep.Bot;
 
+import ITStep.Data.UserDao;
+import ITStep.Data.model.UsersEntity;
 import ITStep.Image.ImageService;
 import ITStep.Weather.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
@@ -27,6 +30,9 @@ public class Bot extends TelegramLongPollingBot {
     WeatherService weatherService;
     @Autowired
     ImageService imageService;
+    @Autowired
+    UserDao userDao;
+
 
     public void setWeatherService(WeatherService weatherService) {
         this.weatherService = weatherService;
@@ -54,6 +60,8 @@ public class Bot extends TelegramLongPollingBot {
             message = "Almaty";
         }
 
+        saveData(update.getMessage());
+
         message = message.toLowerCase();
         if (message.equals("/start")) {
             start();
@@ -61,6 +69,22 @@ public class Bot extends TelegramLongPollingBot {
         else {
             sendWeather(message);
         }
+    }
+
+    private void saveData(Message message){
+        if(message!=null){
+            UsersEntity user = new UsersEntity();
+            System.out.println(message.getChatId().toString());
+            System.out.println(message.getChat().getFirstName());
+            System.out.println(message.getChat().getLastName());
+            System.out.println(message.getChat().getUserName());
+            user.setChatId(message.getChatId().toString());
+            user.setFirstName(message.getChat().getFirstName());
+            user.setLastName(message.getChat().getLastName());
+            user.setName(message.getChat().getUserName());
+            userDao.createUser(user);
+        }
+        System.out.println("message is null");
     }
 
     private void sendWeather(String city) {
