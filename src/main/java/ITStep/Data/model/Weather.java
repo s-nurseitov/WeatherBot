@@ -2,11 +2,13 @@ package ITStep.Data.model;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "WEATHER", schema = "WEATHERBOT", catalog = "TEST")
-public class WeatherEntity {
+public class Weather {
     private long id;
     private Timestamp datetime;
     private String city;
@@ -16,9 +18,11 @@ public class WeatherEntity {
     private String pressure;
     private String wind;
     private String windDir;
+    private List<Request> requests = new LinkedList<>();
 
     @Id
     @Column(name = "ID")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long getId() {
         return id;
     }
@@ -107,11 +111,20 @@ public class WeatherEntity {
         this.windDir = windDir;
     }
 
+    @OneToMany(mappedBy = "weather", fetch = FetchType.LAZY)
+    public List<Request> getRequests() {
+        return requests;
+    }
+
+    public void setRequests(List<Request> requests) {
+        this.requests = requests;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        WeatherEntity that = (WeatherEntity) o;
+        Weather that = (Weather) o;
         return id == that.id &&
                 Objects.equals(datetime, that.datetime) &&
                 Objects.equals(city, that.city) &&

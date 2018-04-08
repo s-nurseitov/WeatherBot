@@ -2,47 +2,32 @@ package ITStep.Data.model;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Table(name = "USERS", schema = "WEATHERBOT", catalog = "TEST")
-public class UsersEntity {
-    @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-    @Basic
-    @Column(name = "CHAT_ID")
-    private String chatId;
-    @Basic
-    @Column(name = "FIRST_NAME")
+public class User {
+    private long chatId;
     private String firstName;
-    @Basic
-    @Column(name = "LAST_NAME")
     private String lastName;
-    @Basic
-    @Column(name = "NAME")
     private String name;
-    @Basic
-    @Column(name = "CREATE_DATE")
     private Timestamp createDate;
+    private List<Request> requests = new LinkedList<>();
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getChatId() {
+    @Id
+    @Column(name = "CHAT_ID")
+    public long getChatId() {
         return chatId;
     }
 
-    public void setChatId(String chatId) {
+    public void setChatId(long chatId) {
         this.chatId = chatId;
     }
 
+    @Basic
+    @Column(name = "FIRST_NAME")
     public String getFirstName() {
         return firstName;
     }
@@ -51,6 +36,8 @@ public class UsersEntity {
         this.firstName = firstName;
     }
 
+    @Basic
+    @Column(name = "LAST_NAME")
     public String getLastName() {
         return lastName;
     }
@@ -59,6 +46,8 @@ public class UsersEntity {
         this.lastName = lastName;
     }
 
+    @Basic
+    @Column(name = "NAME")
     public String getName() {
         return name;
     }
@@ -67,6 +56,8 @@ public class UsersEntity {
         this.name = name;
     }
 
+    @Basic
+    @Column(name = "CREATE_DATE")
     public Timestamp getCreateDate() {
         return createDate;
     }
@@ -75,13 +66,21 @@ public class UsersEntity {
         this.createDate = createDate;
     }
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    public List<Request> getRequests() {
+        return requests;
+    }
+
+    public void setRequests(List<Request> requests) {
+        this.requests = requests;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UsersEntity that = (UsersEntity) o;
-        return id == that.id &&
-                Objects.equals(chatId, that.chatId) &&
+        User that = (User) o;
+        return chatId == that.chatId &&
                 Objects.equals(firstName, that.firstName) &&
                 Objects.equals(lastName, that.lastName) &&
                 Objects.equals(name, that.name) &&
@@ -91,6 +90,6 @@ public class UsersEntity {
     @Override
     public int hashCode() {
 
-        return Objects.hash(id, chatId, firstName, lastName, name, createDate);
+        return Objects.hash(chatId, firstName, lastName, name, createDate);
     }
 }

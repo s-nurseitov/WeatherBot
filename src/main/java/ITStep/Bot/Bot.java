@@ -1,13 +1,18 @@
 package ITStep.Bot;
 
-import ITStep.Data.UserDao;
-import ITStep.Data.model.UsersEntity;
+import ITStep.Data.DataDao.Dao;
+import ITStep.Data.DataDao.WeatherDao;
+import ITStep.Data.model.Request;
+import ITStep.Data.model.User;
+import ITStep.Data.model.Weather;
+import ITStep.Facade.WeatherFacade;
 import ITStep.Image.ImageService;
 import ITStep.Weather.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.api.objects.Chat;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -15,6 +20,7 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,22 +31,15 @@ public class Bot extends TelegramLongPollingBot {
     private final static String _TOKEN = "595769930:AAGFeygIEv7CoXqg1IMerLmE_tn1Pn-HQFA";
     private final static String _BOT_USER_NAME = "TrainingWeatherBot";
     private long chatId;
-
     @Autowired
-    WeatherService weatherService;
+    private ImageService imageService;
     @Autowired
-    ImageService imageService;
+    private Dao userDao;
     @Autowired
-    UserDao userDao;
-
-
-    public void setWeatherService(WeatherService weatherService) {
-        this.weatherService = weatherService;
-    }
-
-    public void setImageService(ImageService imageService) {
-        this.imageService = imageService;
-    }
+    private Dao requestDao;
+    @Autowired
+    private WeatherFacade weatherFacade;
+    private Weather currentWeather;
 
     public void onUpdateReceived(Update update) {
         chatId = update.getMessage().getChatId();
@@ -54,17 +53,11 @@ public class Bot extends TelegramLongPollingBot {
 
         if(message == null || message.isEmpty()) return;
 
-        if (message.contains("\u0030\u20E3\u0031\u20E3Astana")) {
-            message = "Astana";
-        } else if (message.contains("\u0030\u20E3\u0032\u20E3Almaty")) {
-            message = "Almaty";
-        }
-
         saveData(update.getMessage());
 
         message = message.toLowerCase();
         if (message.equals("/start")) {
-            start();
+            sendTextMessage("Hello! This is simple weather bot!");
         }
         else {
             sendWeather(message);
@@ -72,51 +65,56 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void saveData(Message message){
-        if(message!=null){
-            UsersEntity user = new UsersEntity();
-            System.out.println(message.getChatId().toString());
-            System.out.println(message.getChat().getFirstName());
-            System.out.println(message.getChat().getLastName());
-            System.out.println(message.getChat().getUserName());
-            user.setChatId(message.getChatId().toString());
-            user.setFirstName(message.getChat().getFirstName());
-            user.setLastName(message.getChat().getLastName());
-            user.setName(message.getChat().getUserName());
-            userDao.createUser(user);
+        if(message!=null) {
+            Chat chat = message.getChat();
+            String text = message.getText();
+            Request request = new Request();
+            request.setDate(new Timestamp(System.currentTimeMillis()));
+            request.setText(text);
+            User user = (User) userDao.findOne(chat.getId());
+            if (user == null) {
+                user.setChatId(chat.getId());
+                user.setFirstName(chat.getFirstName());
+                user.setLastName(chat.getLastName());
+                user.setName(chat.getUserName());
+                user.setCreateDate(new Timestamp(System.currentTimeMillis()));
+                userDao.create(user);
+            }
+            request.setUser(user);
+            currentWeather = weatherFacade.getWeather(text);
+            request.setWeather(currentWeather);
+            requestDao.create(request);
         }
-        System.out.println("message is null");
     }
 
     private void sendWeather(String city) {
         String weather = null;
-        try {
-            weatherService.LoadCurrentWeather(city);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(currentWeather==null){
             sendTextMessage("Город не найден!");
             return;
         }
+
         weather = "Дата: " + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE) +
-                "\nСтрана: " + weatherService.getCountry() +
-                "\nГород: " + weatherService.getCity() +
-                "\nТемпература: " + weatherService.getTemp() + "\u00b0C" +
-                "\nДавление: " + weatherService.getPressure() +
-                "\nВлажность: " + weatherService.getHumidity() + "%";
+                "\nСтрана: " + currentWeather.getCountry() +
+                "\nГород: " + currentWeather.getCity() +
+                "\nТемпература: " + currentWeather.getTemp() + "\u00b0C" +
+                "\nДавление: " + currentWeather.getPressure() +
+                "\nВлажность: " + currentWeather.getHumidity() + "%" +
+                "\nСкорость ветра: " + currentWeather.getWind() + "км/ч" +
+                "\nНаправление ветра: " + currentWeather.getWindDir();
         String url = null;
         try {
             url = imageService.getImageUrlByCity(city);
         } catch (Exception e) {
             sendTextMessage(weather);
             e.printStackTrace();
+            return;
         }
         sendPhotoMessage(url, weather);
     }
 
     private void sendPhotoMessage(String url, String text) {
         System.out.println("Response: " + text);
-        SendMessage s = new SendMessage();
-        s.setChatId(chatId);
-        s.setText(text);
         SendPhoto photo = new SendPhoto()
                 .setChatId(chatId)
                 .setPhoto(url)
@@ -129,14 +127,11 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     private void sendTextMessage(String text) {
-        SendMessage s = new SendMessage();
-        s.setChatId(chatId);
-        s.setText(text);
-        send(s);
-    }
-
-    private void send(SendMessage message){
-        System.out.println("Response: " + message.getText());
+        System.out.println("Response: " + text);
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
+        message.setReplyMarkup(getKeyboard());
         try {
             sendMessage(message);
         } catch (TelegramApiException e) {
@@ -144,20 +139,16 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    private void start() {
+    private ReplyKeyboardMarkup getKeyboard(){
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         keyboardMarkup.setResizeKeyboard(true);
         List keyboard = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        row.add("\u0030\u20E3\u0031\u20E3Astana");
-        row.add("\u0030\u20E3\u0032\u20E3Almaty");
+        row.add("Astana");
+        row.add("Almaty");
         keyboard.add(row);
         keyboardMarkup.setKeyboard(keyboard);
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setReplyMarkup(keyboardMarkup);
-        message.setText("Hello! This is simple weather bot!");
-        send(message);
+        return keyboardMarkup;
     }
 
     public String getBotUsername() {
