@@ -30,6 +30,7 @@ public class RequestDaoImpl implements Dao<Request> {
     public boolean create(Request entity) {
         try {
             entityManager.persist(entity);
+            entityManager.flush();
         } catch (Exception e) {
             e.printStackTrace();
             return false;

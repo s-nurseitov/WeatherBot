@@ -5,7 +5,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 public class Main {
     public static void main(String[] args) {
@@ -14,7 +13,7 @@ public class Main {
         TelegramBotsApi botapi = new TelegramBotsApi();
         try {
             botapi.registerBot(ctx.getBean(TelegramLongPollingBot.class));
-        } catch (TelegramApiException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

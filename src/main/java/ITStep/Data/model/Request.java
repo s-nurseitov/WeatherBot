@@ -45,8 +45,8 @@ public class Request {
     }
 
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL})
-    @JoinColumn(name = "WEATHER_ID", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "WEATHER_ID", nullable = false)
     public Weather getWeather() {
         return weather;
     }
@@ -56,13 +56,15 @@ public class Request {
     }
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "USER_ID", insertable = false, updatable = false)
+    @JoinColumn(name = "USER_ID", nullable = false)
     public User getUser() {
         return user;
     }
 
     public void setUser(User user) {
         this.user = user;
+        System.out.println(this.user);
+        System.out.println(user);
     }
 
 

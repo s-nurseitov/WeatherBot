@@ -31,6 +31,7 @@ public class WeatherDaoImpl implements WeatherDao {
     public boolean create(Weather entity) {
         try {
             entityManager.persist(entity);
+            entityManager.flush();
         } catch (Exception e) {
             e.printStackTrace();
             return false;

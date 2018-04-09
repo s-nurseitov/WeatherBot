@@ -67,13 +67,15 @@ public class Bot extends TelegramLongPollingBot {
     private void saveData(Message message){
         if(message!=null) {
             Chat chat = message.getChat();
-            String text = message.getText();
+            String text = message.getText().toUpperCase();
             Request request = new Request();
             request.setDate(new Timestamp(System.currentTimeMillis()));
             request.setText(text);
             User user = (User) userDao.findOne(chat.getId());
             if (user == null) {
+                user = new User();
                 user.setChatId(chat.getId());
+                System.out.println(chat.toString());
                 user.setFirstName(chat.getFirstName());
                 user.setLastName(chat.getLastName());
                 user.setName(chat.getUserName());

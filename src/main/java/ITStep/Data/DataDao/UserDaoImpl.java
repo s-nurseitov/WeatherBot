@@ -30,6 +30,7 @@ public class UserDaoImpl implements Dao<User> {
     public boolean create(User entity) {
         try {
             entityManager.persist(entity);
+            entityManager.flush();
         } catch (Exception e) {
             e.printStackTrace();
             return false;
